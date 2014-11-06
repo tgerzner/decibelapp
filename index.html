@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <title>Lautstärkemessung</title>
+        <link rel="stylesheet" type="text/css" href="css/style.css">
+        <link rel="stylesheet" href="js/leaflet-0.7.2/leaflet.css" />
+        <link rel="stylesheet" href="css/jquery.mobile-1.0.min.css" />
+
+        <script src="js/jquery-1.6.4.min.js"></script>
+        <script type="text/javascript" src="js/jqtouch/jqtouch.js"></script>
+        <script src="js/leaflet-0.7.2/leaflet.js"></script>
+        <script src="js/jquery.mobile-1.0.min.js"></script>
+        <script src="cordova.js"></script>
+
+        <style>
+            .ui-grid-a
+            {
+                padding: 5px;
+            }
+            .ui-grid-a .ui-block-a
+            {
+                height: 40px;
+            }
+            .ui-grid-a .ui-block-b
+            {
+                height: 40px;
+                font-size: 5px;
+            }
+
+                        [data-role=page]{height: 100% !important; position:relative !important;}
+            [data-role=content]{height: 100% !important; position:relative !important;}
+            [data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%; margin-left:0; padding-left: 0; left: 0;}
+        </style>
+
+<!--        <script>
+            $.ajax({
+                type: "GET",
+                url: "getProjects.php",
+                success: function(temp_projects) {
+                    projects = temp_projects.split("<br>")
+                    projects.pop()
+                    for (i in projects){
+                        if (projects[i] != ""){
+                            var project = document.getElementById("selectProject");
+                            var option = document.createElement("option");
+                            option.text = projects[i];
+                            option.value = projects[i];
+                            project.add(option);
+                        }
+                    }
+                }
+            });
+        </script>-->
+
+
+        <script type="text/javascript">         
+            // Wait for PhoneGap to load
+            document.addEventListener("deviceready", onDeviceReady, false);
+
+
+            // PhoneGap is ready
+            function onDeviceReady() {
+            }
+
+        </script>
+    </head>
+    <body>
+        <div data-role="page">
+            <div data-role="header" id="headerevt" data-theme="c" data-tap-toggle="false" >
+                <a href="http://www.fhnw.ch/ivgi" target="_blank"><img src="images/NW_Logo.png" width="50" height="30"></a>
+                <h1>Lautstärke</h1>
+                <a href="#all_info" data-role="button" class="ui-btn-right" data-icon="info">Hilfe</a>
+            </div>
+
+            <div data-role="content" style="margin: 0px; padding: 0px">
+                <div id="map" ></div> <!-- TODO: height dynamisch anpassen -->
+
+            </div><!-- /content -->
+            <div data-role="footer" data-position="fixed" id="footerevents" data-tap-toggle="false" data-theme="c">
+
+
+                <table style="width: 100%; margin: 0px">
+                    <tr>
+                        <th>
+                            <table style="width: 100%">
+                                <tr>
+                                    <th style="text-align: right; width: 53%" >Messwert:</th>
+                                    <th style="text-align: left"><input type="number" name="number" id="number" value="" style = "width: 50px" min="20" max="120" size="3"/></th>
+                                </tr>
+
+                            </table>
+                        </th>
+                        <th>Projekt:</th>
+                    </tr>
+                    <tr>
+                        <th>
+                            <div data-role="controlgroup" data-type="horizontal" >
+                                    <a onclick="save()" data-role="button"><img src="images/Save-icon.png"></a>
+                                    <a onclick="clear_storage_last()" data-role="button"><img src="images/Delete-icon_last.png"></a>
+                                    <a onclick="clear_storage()" data-role="button"><img src="images/Delete-icon.png"></a>
+                                    <a onclick="upload()" data-role="button"><img src="images/Upload-icon.png"></a>
+                                </div>
+                        </th>
+                        <th><div style="height: 47px">
+                            <select name="selectProject" id="selectProject">
+                                <option value="null">Kein Projekt ausgewählt</option>
+                            </select>
+                            </div>
+                        </th>
+                    </tr>
+                </table>
+            </div><!-- /footer -->
+        </div><!-- /page -->
+
+        <!------------------------------ Allgemeine Infomationen-Seite -------------------------------------------------------->
+
+        <div data-role="page" id="all_info" data-title="Lautstaerkemessung" data-add-back-btn="true" data-add-back-btn-text="Previous">
+            <div data-role="header" id="headerallinfo" data-theme="c">
+                <h1>Lärmapp</h1>
+            </div>
+            <div data-role="content" id="inf-content">
+                <h2>Informationen zur Lärmkarte</h2>
+                <p>Diese Webanwenung dient dazu Lärmwerte zu erfassen und sie auf einer Karte darzustellen. <br><br>
+                   Diese Hilfeseite soll Ihnen einen Überblick über die Funktionalitäten der Erfassungswebseite geben. <br><br>
+                    <b>Position:</b> Sofern ihr Gerät die Lokalisierung zulässt, wird der Erfassungsmarker an Ihrer aktuellen Position angezeigt. <br>
+                    Durch berühren der Karte an der gewünschten Stelle können Sie die Position des Markers anpassen. <br>
+                    Der Dezibelmesswert wird bei der Speicherung zu der Position des Markers abgespeichert.<br><br>
+
+                    <b>Messwert:</b> Sie können den gemessen Wert im Textfeld [2.] eintragen. <br>
+                    Der Wertebereich für die Messwerte ist von 20-120 dB beschränkt.<br><br>
+
+                    <b>Speichern:</b> Die Werte werden in zwei Stufen gespeichert. Zuerst werden sie mit der Schaltfläche "Speichern" [3.] <br>
+                    in den lokalen Speicher gespeichert. Mit der Schaltfläche "Upload" [6.] werden alle Werte vom lokalen Speicher<br>
+                    in die Datenbank gespeichert. Diese Methode hat den Vorteil, dass auch Messwerte ohne mobile <br>
+                    Datenverbindung erfasst werden können. Dazu muss der Upload einfach erst bei vorhandener Datenverbindung ausgeführt werden.<br><br>
+                    <b>Löschen:</b> Die Schaltfläche "Löschen 1" [4.] löscht den zuletzt zum lokalen Speicher hinzugefügten Messwert.<br>
+                    Die Schaltfläche "Löschen" [5.] löscht den kompletten Inhalt des lokalen Speichers.<br><br>
+
+                    <img id="ch-back" src="images/IPhone_5.png"> <br><br>
+
+                    <b>Kontakt: </b> Für weitere Informationen zum Projekt kontaktieren Sie uns via <a href="http://www.fhnw.ch/habg/ivgi/kontakt" target="_blank">Kontakt</a> <br>
+                    oder melden Sie sich direkt beim Projektverantwortlichen <b>Prof. Hans-Jörg Stark</b> <a href=" mailto:hansjoerg.stark@fhnw.ch"><img src="images/Mail-icon.png"></a> (hansjoerg.stark@fhnw.ch)
+
+                </p>
+            </div>
+
+            <script>
+
+$.mobile.fixedToolbars
+        .setTouchToggleEnabled(false);
+
+    var latitude;
+    var longitude;
+    var circle;
+    var marker;
+
+    /*deletes last item of local storage element*/
+    function clear_storage_last()
+    {
+
+        if(localStorage.result == undefined)
+        {
+            alert("Es befinden sich keine Messungen im lokalen Speicher")
+
+        }
+        else
+        {
+            var storage_array = localStorage.result.split(";");
+
+            var last_item_index = storage_array.length-1;
+
+            var last_item_string = storage_array[last_item_index].split(",");
+
+            var r=confirm("Wollen Sie die Messung vom " + last_item_string[2].replace("_", " ")+" mit dem Dezibel Wert: " + last_item_string[3] + " wirklich löschen?");
+            if (r==true)
+            {
+                storage_array.pop();
+
+                localStorage.clear();
+
+                if(storage_array.length != 0)
+                {
+                    localStorage.result = storage_array.join(';');
+                }
+
+                x=""
+            }
+            else
+            {
+                x="";
+            }
+
+        }
+
+        //document.getElementById("result_confirm").innerHTML=x;
+    }
+
+    /*clears local storage element*/
+    function clear_storage()
+    {
+
+        if(localStorage.result == undefined)
+        {
+            alert("Es befinden sich keine Messungen im lokalen Speicher")
+            document.getElementById("result_confirm").innerHTML="";
+
+        }
+
+        else
+        {
+            var storage_array = localStorage.result.split(";");
+
+            var r=confirm("Wollen Sie wirklich alle Messungen aus dem lokalen Speicher löschen? Aktuell: " + storage_array.length + " Messungen");
+            if (r==true)
+            {
+                x= storage_array.length + " Messung(en) gelöscht!"
+                localStorage.clear();
+
+
+
+
+            }
+            else
+            {
+                x="";
+            }
+
+            //document.getElementById("result_confirm").innerHTML= x;
+        }
+    }
+
+    /* loads data to database*/
+    function upload()
+    {
+
+        if(localStorage.result == undefined)
+        {
+
+            alert("Es befinden sich keine Messungen im lokalen Speicher");
+            localStorage.clear();
+        }
+        else
+        {
+            var php_file_name = "savetodatabase.php"
+
+            var url=php_file_name+"?resultat_string="+localStorage.result;
+
+            if (window.XMLHttpRequest)
+            {// code for IE7+, Firefox, Chrome, Opera, Safari
+                xmlhttp=new XMLHttpRequest();
+            }
+            else
+            {// code for IE6, IE5
+                xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttp.onreadystatechange=function()
+            {
+                if (xmlhttp.readyState==4 && xmlhttp.status==200)
+                {
+                    alert(xmlhttp.responseText)
+                }
+            };
+            xmlhttp.open("GET",url,true);
+            xmlhttp.send();
+
+
+            /*clears local storage after database upload*/
+            localStorage.clear();
+
+            //document.getElementById("result_confirm").innerHTML= "";
+        }
+
+    }
+
+    /*geolocation*/
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(foundLocation, noLocation,
+                {enableHighAccuracy:true,
+                    timeout:3000});
+    } else {alert("Der Browser unterstuetzt Geolocation nicht.")}
+
+    /*geolocation success*/
+    function foundLocation(position)
+    {
+
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+        var zoom = 16;
+
+        var map = L.map('map',{
+            center: [latitude, longitude],
+            zoom: zoom,
+            zoomControl: false,
+            layers: []   // Default Wert beim Laden der Karte
+        });
+         var osm = new L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        map.attributionControl.setPrefix("");
+
+        marker =L.marker([latitude, longitude]).addTo(map)
+            .bindPopup("Aktueller<br />Standort").openPopup();
+
+        map.on('click', onMapClick);
+
+        function onMapClick(e) {
+
+
+            latitude = e.latlng.lat;
+            longitude = e.latlng.lng;
+
+            marker.setLatLng(e.latlng);
+        }
+
+
+    }
+
+    /*geolocation error*/
+    function noLocation()
+    {
+        alert("Die Position konnte  nicht bestimmt werden. Bitte platzieren Sie den Marker an Ihrem ungefähren Standort.");
+
+        latitude = 47.533;
+        longitude = 7.638;
+
+        var map = L.map('map',{
+            center: [latitude, longitude],
+            zoom: 16,
+            zoomControl: false,
+            layers: []   // Default Wert beim Laden der Karte
+        });
+        var osm = new L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        circle = new L.circleMarker([latitude,longitude],{
+            radius: 5,
+            fillColor: "blue",
+            color: "#0000FF",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+
+        map.on('click', onMapClick);
+
+        function onMapClick(e) {
+
+
+            latitude = e.latlng.lat;
+            longitude = e.latlng.lng;
+
+            circle.setLatLng(e.latlng);
+        }
+
+    }
+
+    /*create timestamp for measurement*/
+
+    function create_timestamp()
+    {
+        var today = new Date();
+        var dd = today.getDate();
+        var mm = today.getMonth()+1; //January is 0!
+        var yyyy = today.getFullYear();
+
+        if(dd<10) {
+            dd='0'+dd
+        }
+
+        if(mm<10) {
+            mm='0'+mm
+        }
+
+        var intHours = today.getHours();
+        var intMinutes = today.getMinutes();
+        var intSeconds = today.getSeconds();
+
+
+        if (intHours < 10) {var hours = "0"+intHours+":";}
+        else {hours = intHours+":";}
+        if (intMinutes < 10) {var minutes = "0"+intMinutes+":";}
+        else {minutes = intMinutes+":";}
+        if (intSeconds < 10) {var seconds = "0"+intSeconds+" ";}
+        else {seconds = intSeconds;}
+        var timeString = hours+minutes+seconds;
+
+        var date_string = yyyy+"-"+mm+"-"+dd+"_"+timeString;
+        return date_string
+    }
+
+    /*save to local storage element*/
+    function save()
+    {
+        var intRegex = /^\d+$/;
+        var floatRegex = /^((\d+(\.\d *)?)|((\d*\.)?\d+))$/;
+
+        var decibel_value = $('#number').val();
+
+        //checks if decibel_value is a number
+        if(intRegex.test(decibel_value) || floatRegex.test(decibel_value)) {
+
+            // checks if decibel_value is a Float or a Integer
+            var modulo  = decibel_value%1;
+            if(modulo == 0)
+            {
+                if(decibel_value>120 || decibel_value<20)
+                {
+                    alert("Der Dezibelwert muss im Bereich 20 - 120 liegen")
+                }
+                else
+                {
+
+                    if(typeof(Storage)!=="undefined")
+                    {
+                        // Code for localStorage/sessionStorage.
+
+
+                    var date= create_timestamp();
+                    var latitude_round = latitude.toFixed(3);
+                    var longitude_round = longitude.toFixed(3);
+                    var user = navigator.userAgent;
+                    var project = document.getElementById("selectProject").value
+                    var alert_string  = "Der Wert " + decibel_value + " wurde in den lokalen Speicher gespeichert.";
+                    //document.getElementById("result_confirm").innerHTML=alert_string;
+					alert(alert_string);
+
+                    $('#number').val("");
+
+                    var resultat_string = latitude.toFixed(6) +","+longitude.toFixed(6)+","+date+","+decibel_value+","+project;
+
+                        if(localStorage.result == undefined)
+                        {
+                            localStorage.result = resultat_string;
+                        }
+                        else
+                        {
+
+                        localStorage.result = localStorage.result +";"+ resultat_string;
+
+                        }
+
+                        //document.getElementById("result_confirm").innerHTML= "";
+
+
+                    }
+                    else
+                    {
+                        console.log("Sorry! No Web Storage support..");
+                    }
+
+
+
+                }
+            }
+            else
+            {
+                alert("Bitte geben Sie den Dezibelwert als Ganzzahl ein. z.B. 50 ");
+            }
+
+        }
+        else
+        {
+            alert("Bitte geben Sie den Dezibelwert als Ganzzahl ein. z.B. 50 ");
+        }
+    }
+
+</script>
+
+        </div>
+    </body>
+</html>
