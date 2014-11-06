@@ -36,11 +36,11 @@
         </style>
 
        <script>
-           alert("aaa")
             $.ajax({
                 type: "GET",
                 url: "http://www.see--you.ch/decibel/measure/getProjects.php",
                 success: function(temp_projects) {
+                    alert("dsaf")
                     projects = temp_projects.split("<br>")
                     projects.pop()
                     for (i in projects){
